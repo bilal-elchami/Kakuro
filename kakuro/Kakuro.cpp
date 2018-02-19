@@ -84,9 +84,27 @@ class Kakuro {
 	int getValue(int col, int row) {
 		return values[col-1][row-1];
 	}
+	
 	void setValue(int col, int row, int value) {
 		values[col-1][row-1] = value;
 	}
+	
+	int getSumRow(int row) {
+		int sum = 0;
+		for (int col = 0; col < grid.getNumColumns(); col ++) {
+			sum += values[col][row - 1];
+		}
+		return sum;
+	}
+	
+	int getSumCol(int col) {
+		int sum = 0;
+		for (int row = 0; row < grid.getNumRows(); row++) {
+			sum += values[col-1][row];
+		}
+		return sum;
+	}
+
 
   public:
 	void initialize(string path, string delimiter, int minValue, int maxValue) {
@@ -95,7 +113,7 @@ class Kakuro {
 		possibleMaxValue = maxValue;
 		for (int row = 1; row <= grid.getNumRows(); row++) {
 			for (int col = 1; col <= grid.getNumColumns(); col++) {
-				setValue(col, row, possibleMinValue);
+				setValue(col, row, (possibleMinValue + col + row) * 2);
 			}
 		}
 	}
@@ -145,4 +163,5 @@ int main() {
 	kakuro.show();
 	kakuro.solve();
 	kakuro.show();
+	
 }
