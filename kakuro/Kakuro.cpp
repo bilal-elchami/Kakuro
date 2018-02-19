@@ -81,6 +81,7 @@ class Kakuro {
 	int possibleMinValue;
 	int possibleMaxValue;
 	int values[10][10]; // here we should set the values to --> values[grid.col][grid.rows]
+	
 	int getValue(int col, int row) {
 		return values[col-1][row-1];
 	}
@@ -105,6 +106,9 @@ class Kakuro {
 		return sum;
 	}
 
+	int getRandomValue(int minValue, int maxValue) {
+		return rand() % (maxValue - minValue) + minValue;
+	}
 
   public:
 	void initialize(string path, string delimiter, int minValue, int maxValue) {
@@ -163,5 +167,4 @@ int main() {
 	kakuro.show();
 	kakuro.solve();
 	kakuro.show();
-	
 }
