@@ -110,6 +110,28 @@ class Kakuro {
 		return rand() % (maxValue - minValue) + minValue;
 	}
 
+	bool isFinishGame(){
+		for (int row = 1; row <= grid.getNumRows(); row++) {
+			if (getSumRow(row) != grid.getRowTargetSum(row)) {
+				return false;
+			}
+		}
+		for (int col = 1; col <= grid.getNumColumns(); col++) {
+			if (getSumCol(col) != grid.getColTargetSum(col)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	string formatValue(int value) {
+		string result = to_string(value);
+		if (result.length() == 1) {
+			result = "0" + result;
+		}
+		return result;
+	}
+
   public:
 	void initialize(string path, string delimiter, int minValue, int maxValue) {
 		grid.initialize(path, delimiter);
@@ -133,20 +155,20 @@ class Kakuro {
 			for (int col = 0; col <= grid.getNumColumns(); col++) {
 				string value = "";
 				if ((col == 0) && (row == 0)) {
-					value = " ";
+					value = "  ";
 				} else if (col == 0) {
-					value = to_string(grid.getRowTargetSum(row));
+					value = formatValue(grid.getRowTargetSum(row));
 				} else if (row == 0) {
-					value = to_string(grid.getColTargetSum(col));
+					value = formatValue(grid.getColTargetSum(col));
 				} else {
-					value = to_string(getValue(col, row));
+					value = formatValue(getValue(col,row));
 				}
-				cout << value << " | ";
+				cout << value << "  |  ";
 			}
 			cout << endl;
 			if (row == 0) {
 				for (int c = 0; c <= grid.getNumColumns(); c++) {
-					cout << "----";
+					cout << "-------";
 				}
 				cout << endl;
 			}
