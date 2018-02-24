@@ -59,6 +59,10 @@ class Cell {
 			value = v;
 		}
 
+		void unset_value() {
+			value = INIT_VALUE;
+		}
+
 		int * get_domain() {
 			return domain;
 		}
@@ -95,7 +99,6 @@ class Cell {
 				}
 				domain_size--;
 			}
-			
 		}
 
 		void remove_value_domain_greater(int value) {
@@ -135,7 +138,7 @@ class Grid {
 			}
 		}
 	}
-
+ 
   public:
 	Grid(int cols, int rows, int possible_values[MAX], int possible_values_size) {
 		num_columns = cols;
@@ -177,12 +180,14 @@ class Grid {
 
 		bool result = true;
 		int sum_row = 0;	
+		
 		for (int c = 0; c < num_columns; c++) {
 			cells[c][row]->remove_value_domain(value); // remove value from domain of on the same row
 			if (cells[c][row]->get_value() != INIT_VALUE) {
 				sum_row += cells[c][row]->get_value();
 			}
 		}
+
 		int max_row_value = target_row_sum - sum_row;
 		bool is_row_assigned = true;
 		for (int c = 0; c < num_columns; c++) {
@@ -191,6 +196,7 @@ class Grid {
 				cells[c][row]->remove_value_domain_greater(max_row_value);
 			}
 		}
+
 		if (is_row_assigned) {
 			if ((max_row_value < 0) || (sum_row != target_row_sum)) {
 				if (max_row_value < 0) {
@@ -301,6 +307,10 @@ class Grid {
 		}
 	}
 
+	void unset_value(int col, int row){
+		cells[col][row]->unset_value();
+	}
+
 	void recalculate_domains() {
 		for (int col = 0; col < num_columns; col++) {
 			for (int row = 0; row < num_rows; row++) {
@@ -400,8 +410,8 @@ class Kakuro {
 			}
 			int * possible_values = grid->get_possible_values(col, row);
 			for (int i = 0; i < grid->get_possible_values_size(col, row); i++) {
-				cout << "VALUE : " << possible_values[i] << endl;
-				cout << endl << "SETTING VALUE of CELL ["  << (col + 1) << "," << (row + 1) << "] = " << possible_values[i] << endl;
+				cout << endl << "SIZE " << grid->get_possible_values_size(col, row) << endl;
+				cout << "SETTING VALUE of CELL ["  << (col + 1) << "," << (row + 1) << "] = " << possible_values[i] << endl;
 				grid->set_cell_value(col, row, possible_values[i]);
 				bool consistent = grid->update_domains_free_cell(col, row, possible_values[i], target_col_sum[col], target_row_sum[row]);
 				bool no_domain_empty = grid->check_no_domain_empty();
@@ -412,10 +422,12 @@ class Kakuro {
 						return true;
 					}
 				} else {
-					grid->recalculate_domains();
 					if (!no_domain_empty) {
 						cout << "There is a domain empty of the unassigned value" << endl;
 					}
+					cout << "domains recalculated" << endl;
+					grid->unset_value(col, row);
+					grid->recalculate_domains();
 				}
 			}
 			return false;
