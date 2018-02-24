@@ -183,7 +183,7 @@ class Grid {
 				}
 
 				if (max_row_value != target_row_sum) {
-					cout << "sum_row != target_row_sum " << sum_row << " != " << target_row_sum << endl;
+					cout << "inconsistent --> " << sum_row << " != " << target_row_sum << endl;
 				}
 				result = false; // inconsistent
 			}
@@ -342,9 +342,9 @@ class Kakuro {
 			for (int i = 0; i < grid->get_possible_values_size(col, row); i++) {
 				grid->set_cell_value(col, row, possible_values[i]);
 				show();
-				bool inconsistent = !(grid->update_domains_free_cell(col, row, possible_values[i], target_col_sum[col], target_row_sum[row]));
+				bool consistent = grid->update_domains_free_cell(col, row, possible_values[i], target_col_sum[col], target_row_sum[row]);
 				bool no_domain_empty = grid->check_no_domain_empty();
-				if (no_domain_empty && !inconsistent) {
+				if (no_domain_empty && consistent) {
 					if (forward_checking()) {
 						return true;
 					}
