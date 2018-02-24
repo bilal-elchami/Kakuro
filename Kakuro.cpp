@@ -229,14 +229,22 @@ class Grid {
 	}
 
 	Position get_unassigned_cell_position() {
+		int unassigned_col = -1;
+		int unassigned_row = -1;
+		int min_possible_value_size = -1;
 		for (int col = 0; col < num_columns; col++) {
 			for (int row = 0; row < num_rows; row++) {
 				if (cells[col][row]->get_value() == INIT_VALUE) {
-					return Position(col, row);
+					int possible_value_size = cells[col][row]->get_domain_size();
+					if ((min_possible_value_size == -1) || (possible_value_size < min_possible_value_size)) {
+						unassigned_col = col;
+						unassigned_row = row;
+						min_possible_value_size = possible_value_size;
+					}
 				}
 			}
 		}
-		return Position(-1,-1);
+		return Position(unassigned_col, unassigned_row);
 	}
 
 	int * get_possible_values(int col, int row) {
@@ -382,7 +390,7 @@ class Kakuro {
 					} else {
 						cout << format_value(grid->get_cell_value(col, row)) << " ";
 					}
-					cout << " ";
+					cout << "\t";
 				}
 				cout << endl;
 			}
