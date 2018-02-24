@@ -3,7 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#define MAX 10
+#include <string>
+
+#define MAX 100
 #define INIT_VALUE -1
 using namespace std;
 
@@ -199,13 +201,6 @@ class Grid {
 
 		if (is_row_assigned) {
 			if ((max_row_value < 0) || (sum_row != target_row_sum)) {
-				if (max_row_value < 0) {
-					cout << "max_row_value < 0 " << max_row_value << endl;
-				}
-
-				if (max_row_value != target_row_sum) {
-					cout << "inconsistent --> " << sum_row << " != " << target_row_sum << endl;
-				}
 				result = false; // inconsistent
 			}
 		}
@@ -227,13 +222,6 @@ class Grid {
 		}
 		if (all_col_assigned) {
 			if ((max_col_value < 0) || (sum_col != target_col_sum)) {
-				if (max_col_value < 0) {
-					cout << "max_col_value < 0 " << max_col_value << endl;
-				}
-
-				if (sum_col != target_col_sum) {
-					cout << "inconsistent --> " << sum_col << " != " << target_col_sum << endl;
-				}
 				result = false; // inconsistent
 			}
 		}
@@ -390,7 +378,7 @@ class Kakuro {
 					} else if (row == -1) {
 						cout << target_col_sum[col]; 
 					} else if (col == -1) {
-						cout << target_col_sum[row];
+						cout << target_row_sum[row];
 					} else {
 						cout << format_value(grid->get_cell_value(col, row)) << " ";
 					}
@@ -405,42 +393,59 @@ class Kakuro {
 			int col = unassigned_cell_possition.get_col();
 			int row = unassigned_cell_possition.get_row();
 			if ((col == -1) && (row == -1)) {
-				cout << "no unassigned cell found" << endl;
 				return true;
 			}
 			int * possible_values = grid->get_possible_values(col, row);
-			for (int i = 0; i < grid->get_possible_values_size(col, row); i++) {
-				cout << endl << "SIZE " << grid->get_possible_values_size(col, row) << endl;
-				cout << "SETTING VALUE of CELL ["  << (col + 1) << "," << (row + 1) << "] = " << possible_values[i] << endl;
-				grid->set_cell_value(col, row, possible_values[i]);
-				bool consistent = grid->update_domains_free_cell(col, row, possible_values[i], target_col_sum[col], target_row_sum[row]);
+			int possible_values_count = grid->get_possible_values_size(col, row);
+			int possible_values_copy[MAX];
+			for (int j = 0; j < possible_values_count; j++) {
+				possible_values_copy[j] = possible_values[j];
+			}
+			for (int i = 0; i < possible_values_count; i++) {
+				grid->set_cell_value(col, row, possible_values_copy[i]);
+				bool consistent = grid->update_domains_free_cell(col, row, possible_values_copy[i], target_col_sum[col], target_row_sum[row]);
 				bool no_domain_empty = grid->check_no_domain_empty();
-				show();
-				grid->show_domains(col, row);
 				if (no_domain_empty && consistent) {
 					if (forward_checking()) {
 						return true;
 					}
 				} else {
-					if (!no_domain_empty) {
-						cout << "There is a domain empty of the unassigned value" << endl;
-					}
-					cout << "domains recalculated" << endl;
 					grid->unset_value(col, row);
-					grid->recalculate_domains();
 				}
 			}
+			grid->unset_value(col, row);
+			grid->recalculate_domains();
 			return false;
 		}
+
 		void solve() {
-			forward_checking();
+			cout << "Initial grid : " << endl;
+			show();
+			cout << endl << "--Solving--" << endl << endl;
+
+			clock_t start;
+			double duration;
+			start = clock();
+			if (forward_checking()) {
+				duration = (clock() - start) / (double)CLOCKS_PER_SEC;
+				cout << "Solution Found in " << to_string(duration) << " s" << endl;
+				show();
+			} else {
+				cout << "Solution Not Found" << endl;
+			}
 		}
 };
 
 int main() {
-	Kakuro kakuro("C:\\Users\\eliea\\Desktop\\grid-2.txt", ";");
-	cout << "-----------------INITIAL-------------" << endl;
-	kakuro.show();
-	cout << "-----------------SOLVING-------------" << endl;
+	string path = "";
+	cout << "Enter grid file name : "; 
+	cin >> path; 
+	path = path + ".txt";
+	string delimiter;
+	cout << "Enter delimiter : " ;
+	cin >> delimiter;
+	cout << endl;
+
+	Kakuro kakuro(path, delimiter);
 	kakuro.solve();
 }
