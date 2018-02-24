@@ -31,6 +31,8 @@ class Cell {
 	private:
 		Position position;
 		int value;
+		int initial_domain[MAX];
+		int initial_domain_size;
 		int domain[MAX]; 
 		int domain_size;
 
@@ -38,8 +40,10 @@ class Cell {
 		Cell(int col, int row, int v, int possible_values[MAX], int possible_values_size) : position(col, row) {
 			value = v;
 			domain_size = possible_values_size;
+			initial_domain_size = domain_size;
 			for (int i = 0; i < possible_values_size; i++) {
 				domain[i] = possible_values[i];
+				initial_domain[i] = domain[i];
 			}
 		}
 
@@ -102,6 +106,20 @@ class Cell {
 				}
 			}
 		}
+
+		void reset_to_initial_domain() {
+			domain_size = initial_domain_size;
+			for (int i = 0; i < initial_domain_size; i++) {
+				domain[i] = initial_domain[i];
+			}
+		}
+
+		bool is_assigned() {
+			if (value != INIT_VALUE) {
+				return true;
+			}
+			return false;
+		}
 };
 
 class Grid {
@@ -146,7 +164,7 @@ class Grid {
 		return cells[col][row]->get_value();
 	}
 
-	int set_cell_value(int col, int row, int value) {
+	void set_cell_value(int col, int row, int value) {
 		cells[col][row]->set_value(value);
 	}
 
@@ -166,18 +184,15 @@ class Grid {
 			}
 		}
 		int max_row_value = target_row_sum - sum_row;
-		bool all_row_assigned = true;
+		bool is_row_assigned = true;
 		for (int c = 0; c < num_columns; c++) {
 			if (cells[c][row]->get_value() == INIT_VALUE) {
-				all_row_assigned = false;
+				is_row_assigned = false;
 				cells[c][row]->remove_value_domain_greater(max_row_value);
-			} else {
-				
 			}
 		}
-		if (all_row_assigned) {
-			if ((max_row_value < 0) || (sum_row != target_row_sum))
-			{
+		if (is_row_assigned) {
+			if ((max_row_value < 0) || (sum_row != target_row_sum)) {
 				if (max_row_value < 0) {
 					cout << "max_row_value < 0 " << max_row_value << endl;
 				}
@@ -205,16 +220,13 @@ class Grid {
 			}
 		}
 		if (all_col_assigned) {
-			if ((max_col_value < 0) || (sum_col != target_col_sum))
-			{
-				if (max_col_value < 0)
-				{
+			if ((max_col_value < 0) || (sum_col != target_col_sum)) {
+				if (max_col_value < 0) {
 					cout << "max_col_value < 0 " << max_col_value << endl;
 				}
 
-				if (max_col_value != target_col_sum)
-				{
-					cout << "sum_col != target_col_sum" << sum_col << " != " << target_col_sum << endl;
+				if (sum_col != target_col_sum) {
+					cout << "inconsistent --> " << sum_col << " != " << target_col_sum << endl;
 				}
 				result = false; // inconsistent
 			}
@@ -256,6 +268,54 @@ class Grid {
 		return true;
 	}
 
+	void show_domains(int c, int r) {
+		for (int col = 0; col < num_columns; col++) {
+			cout << "Cell [" << (col+1) << "," << (r+1) << "] : ";
+			int *possible_values = get_possible_values(col, r);
+			for (int i = 0; i < get_possible_values_size(col, r); i++)
+			{
+				cout << possible_values[i] << ", ";
+			}
+			cout << endl;
+		}
+		cout << endl;
+		for (int row = 0; row < num_rows; row++)
+		{
+			cout << "Cell [" << (c+1) << "," << (row+1) << "] : ";
+			int *possible_values = get_possible_values(c, row);
+			for (int i = 0; i < get_possible_values_size(c, row); i++)
+			{
+				cout << possible_values[i] << ", ";
+			}
+			cout << endl;
+		}
+
+	}
+
+	void remove_value_from_domain(int c, int r, int value) {
+		for (int col = 0; col < num_columns; col++) {
+			cells[col][r]->remove_value_domain(value);
+		}
+		for (int row = 0; row < num_rows; row++) {
+			cells[c][row]->remove_value_domain(value);
+		}
+	}
+
+	void recalculate_domains() {
+		for (int col = 0; col < num_columns; col++) {
+			for (int row = 0; row < num_rows; row++) {
+				cells[col][row]->reset_to_initial_domain();
+			}
+		}
+
+		for (int col = 0; col < num_columns; col++) {
+			for (int row = 0; row < num_rows; row++) {
+				if (cells[col][row]->is_assigned()) {
+					remove_value_from_domain(col, row, cells[col][row]->get_value());
+				}
+			}
+		}
+	}
 };
 
 class Kakuro {
@@ -335,20 +395,24 @@ class Kakuro {
 			int col = unassigned_cell_possition.get_col();
 			int row = unassigned_cell_possition.get_row();
 			if ((col == -1) && (row == -1)) {
-				cout << "no free variable" << endl;
+				cout << "no unassigned cell found" << endl;
 				return true;
 			}
 			int * possible_values = grid->get_possible_values(col, row);
 			for (int i = 0; i < grid->get_possible_values_size(col, row); i++) {
+				cout << "VALUE : " << possible_values[i] << endl;
+				cout << endl << "SETTING VALUE of CELL ["  << (col + 1) << "," << (row + 1) << "] = " << possible_values[i] << endl;
 				grid->set_cell_value(col, row, possible_values[i]);
-				show();
 				bool consistent = grid->update_domains_free_cell(col, row, possible_values[i], target_col_sum[col], target_row_sum[row]);
 				bool no_domain_empty = grid->check_no_domain_empty();
+				show();
+				grid->show_domains(col, row);
 				if (no_domain_empty && consistent) {
 					if (forward_checking()) {
 						return true;
 					}
 				} else {
+					grid->recalculate_domains();
 					if (!no_domain_empty) {
 						cout << "There is a domain empty of the unassigned value" << endl;
 					}
@@ -356,7 +420,6 @@ class Kakuro {
 			}
 			return false;
 		}
-
 		void solve() {
 			forward_checking();
 		}
@@ -364,6 +427,8 @@ class Kakuro {
 
 int main() {
 	Kakuro kakuro("C:\\Users\\eliea\\Desktop\\grid-2.txt", ";");
+	cout << "-----------------INITIAL-------------" << endl;
 	kakuro.show();
+	cout << "-----------------SOLVING-------------" << endl;
 	kakuro.solve();
 }
