@@ -492,8 +492,7 @@ class Kakuro {
 			clock_t start;
 			double duration;
 			start = clock();
-			// if (forward_checking()) {
-			if (iterative_sampling()) {
+			if (forward_checking()) {
 				duration = (clock() - start) / (double)CLOCKS_PER_SEC;
 				cout << "Solution Found in " << to_string(duration) << " s" << endl;
 				show();
