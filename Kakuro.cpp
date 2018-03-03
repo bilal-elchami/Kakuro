@@ -322,6 +322,18 @@ class Grid {
 			}
 		}
 	}
+
+	int get_number_free_variable() {
+		int sum = 0;
+		for (int col = 0; col < num_columns; col++) {
+			for (int row = 0; row < num_rows; row++) {
+				if (cells[col][row]->get_value() == INIT_VALUE) {
+					sum++;
+				}
+			}
+		}
+		return sum;
+	}
 };
 
 class Kakuro {
@@ -426,6 +438,52 @@ class Kakuro {
 			return false;
 		}
 
+		int sample() {
+			while (true) {
+				Position unassigned_cell_possition = grid->get_unassigned_cell_position();
+				int col = unassigned_cell_possition.get_col();
+				int row = unassigned_cell_possition.get_row();
+				if ((col == -1) && (row == -1)) {
+					return 0;
+				}
+				int *possible_values = grid->get_possible_values(col, row);
+				int possible_values_count = grid->get_possible_values_size(col, row);
+				int possible_values_copy[MAX];
+				for (int j = 0; j < possible_values_count; j++) {
+					possible_values_copy[j] = possible_values[j];
+				}
+				for (int i = 0; i < possible_values_count; i++) {
+					grid->set_cell_value(col, row, possible_values_copy[i]);
+					bool consistent = grid->update_domains_free_cell(col, row, possible_values_copy[i], target_col_sum[col], target_row_sum[row]);
+					bool no_domain_empty = grid->check_no_domain_empty();
+					bool number_free_variable = grid->get_number_free_variable(); // todo
+					if (!no_domain_empty || !consistent) {
+						return 1 + number_free_variable;		
+					}
+					if (number_free_variable == 0) {
+						return 0;
+					}
+				}
+			}
+		}  
+
+		bool iterative_sampling() {
+			int iteration = 0;
+		
+			cout << sample() << endl;
+			show();
+			cout << sample() << endl;
+			show();
+			cout << sample() << endl;
+			show();
+			cout << sample() << endl;
+			show();
+			cout << sample() << endl;
+			show();
+			iteration++;
+			return false;
+		}
+
 		void solve() {
 			cout << "Initial grid : " << endl;
 			show();
@@ -434,12 +492,14 @@ class Kakuro {
 			clock_t start;
 			double duration;
 			start = clock();
-			if (forward_checking()) {
+			// if (forward_checking()) {
+			if (iterative_sampling()) {
 				duration = (clock() - start) / (double)CLOCKS_PER_SEC;
 				cout << "Solution Found in " << to_string(duration) << " s" << endl;
 				show();
 			} else {
 				cout << "Solution Not Found" << endl;
+				show();
 			}
 		}
 };
@@ -448,7 +508,7 @@ int main() {
 	string path = "";
 	cout << "Enter grid file name : "; 
 	cin >> path; 
-	path = path + ".txt";
+	path = "grids/" + path + ".txt";
 	string delimiter;
 	cout << "Enter delimiter : " ;
 	cin >> delimiter;
