@@ -1,11 +1,11 @@
 # kakuro
 
-## Compile 
+### Compile 
 ```sh
 g++ -o kakuro.exe kakuro.cpp
 ```
 
-## Execution
+### Execution
 ```sh
 kakuro.exe
 ```
