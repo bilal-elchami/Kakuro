@@ -1,0 +1,10 @@
+kakuro/kakuro.VC.db
+kakuro/kakuro.VC.VC.opendb
+kakuro.VC.VC.opendb
+kakuro/Debug
+Debug
+.vs
+doc/*.aux
+doc/*.log
+doc/*.out
+doc/*.synctex.gz
