@@ -473,20 +473,19 @@ class Kakuro {
 				int *possible_values = grid->get_possible_values(col, row);
 				int rnd = rand() % (domain_size);
 				int random_possible_value = possible_values[rnd];
-				cout << "assigning [" << col << "," << row << "] : " << random_possible_value << endl;
+				grid->set_cell_value(col, row, random_possible_value);
 				bool consistent = grid->update_domains_free_cell(col, row, random_possible_value, target_col_sum[col], target_row_sum[row]);
 				bool no_domain_empty = grid->check_no_domain_empty();
 				if (!consistent || !no_domain_empty) {
 					return false;
 				}
-				cout << "	continue" << endl;
 			} else {
 				return false;
 			}
 			return true;
 		}
 
-		void re_initialize_grid() {
+		void re_initialize_grid_value() {
 			for (int col = 0; col < grid->get_num_columns(); col++) {
 				for (int row = 0; row < grid->get_num_rows(); row++) {
 					grid->unset_value(col, row);
@@ -496,10 +495,14 @@ class Kakuro {
 		}
 
 		bool solve_monte_carlo() {
+			int iterations = 0;
 			do {
-				re_initialize_grid();
+				iterations++;
+				re_initialize_grid_value();
 				monte_carlo();
 			} while (!is_end_game());
+			cout << "Finished with " << iterations << " iterations" << endl;
+			return true;
 		}
 
 		bool monte_carlo() {
@@ -513,40 +516,52 @@ class Kakuro {
 			return true;
 		}
 
-		void solve() {
+		void solve(int algorithm) {
 			cout << "Initial grid : " << endl;
 			show();
-			cout << endl << "--Solving--" << endl << endl;
 
 			clock_t start;
-			double duration;
 			start = clock();
 
-			solve_monte_carlo();
-/*
-			if (forward_checking()) {
-				duration = (clock() - start) / (double)CLOCKS_PER_SEC;
-				cout << "Solution Found in " << to_string(duration) << " s" << endl;
-				show();
-			} else {
-				cout << "Solution Not Found" << endl;
-				show();
+			bool algo = false;
+			string algo_str = "";
+			if (algorithm == 1) {
+				algo = forward_checking();
+				algo_str = "forward checking";
+			} else if (algorithm == 2) {
+				algo_str = "monte carlo";
+				algo = solve_monte_carlo();
 			}
-*/		
+
+			cout << endl << "-- Solving using " << algo_str << "'s algorithm --" << endl << endl;
+			if (algo) {
+				cout << "Solution found" << endl;
+			} else {
+				cout << "Solution not found" << endl;
+			}
+			double duration = (clock() - start) / (double)CLOCKS_PER_SEC;
+			cout << "Time elapsed " << to_string(duration) << " s" << endl;
+			show();
 		}
 };
 
 int main() {
-	string path = "";
-	cout << "Enter grid file name : "; 
-	cin >> path; 
-	path = "grids/" + path + ".txt";
-	string delimiter;
-	cout << "Enter delimiter : " ;
-	cin >> delimiter;
-	cout << endl;
+	while (true) {
+		string path = "";
+		cout << "Enter grid file name : ";
+		cin >> path;
+		path = "grids/" + path + ".txt";
+		string delimiter;
+		cout << "Enter delimiter : ";
+		cin >> delimiter;
+		int algo;
+		cout << "Choose an algorithm between FORWARD CHECKING(1) and MONTE CARLO(2) : ";
+		cin >> algo;
+		cout << endl;
 
-	Kakuro kakuro(path, delimiter);
-	kakuro.solve();
+		Kakuro kakuro(path, delimiter);
+		kakuro.solve(algo);
+		cout << endl << endl;
+	}
 }
  
