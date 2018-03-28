@@ -4,10 +4,10 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string>
+using namespace std;
 
 #define MAX 100
 #define INIT_VALUE -1
-using namespace std;
 
 class Position {
 	private:
@@ -256,11 +256,12 @@ class Grid {
 	}
 
 	bool check_no_domain_empty() {
-		// return true if no domain is empty
 		for (int col = 0; col < num_columns; col++) {
 			for (int row = 0; row < num_rows; row++) {
-				if (cells[col][row]->get_value() == INIT_VALUE) { // unassigned
-					if (cells[col][row]->get_domain_size() ==  0) { // have value in domain
+				if (cells[col][row]->get_value() == INIT_VALUE) {
+					// cell not assigned
+					if (cells[col][row]->get_domain_size() ==  0) {
+						// don't have value in domain
 						return false;
 					}
 				}		
@@ -338,13 +339,21 @@ class Grid {
 		return result;
 	}
 	
-	
 	int get_col_sum(int col) {
 		int result = 0;
 		for (int row = 0; row < num_rows; row++) {
 			result += cells[col][row]->get_value();
 		}
 		return result;
+	}
+
+	void reset() {
+		for (int col = 0; col < get_num_columns(); col++) {
+			for (int row = 0; row < get_num_rows(); row++) {
+				unset_value(col, row);
+			}
+		}
+		recalculate_domains();
 	}
 
 };
@@ -382,7 +391,7 @@ class Kakuro {
 			return result;
 		}
 
-		bool is_end_game() {
+		bool is_finished() {
 			for (int col = 0; col < grid->get_num_columns(); col++) {
 				if (grid->get_col_sum(col) != target_col_sum[col]) {
 					return false;
@@ -466,49 +475,35 @@ class Kakuro {
 			grid->recalculate_domains();
 			return false;
 		}
-	
-		bool assign_random_value(int col, int row) {
-			int domain_size = grid->get_possible_values_size(col, row);
-			if (domain_size != 0) {
-				int *possible_values = grid->get_possible_values(col, row);
-				int rnd = rand() % (domain_size);
-				int random_possible_value = possible_values[rnd];
-				grid->set_cell_value(col, row, random_possible_value);
-				bool consistent = grid->update_domains_free_cell(col, row, random_possible_value, target_col_sum[col], target_row_sum[row]);
-				bool no_domain_empty = grid->check_no_domain_empty();
-				if (!consistent || !no_domain_empty) {
-					return false;
-				}
-			} else {
-				return false;
-			}
-			return true;
-		}
 
-		void re_initialize_grid_value() {
-			for (int col = 0; col < grid->get_num_columns(); col++) {
-				for (int row = 0; row < grid->get_num_rows(); row++) {
-					grid->unset_value(col, row);
-				}
-			}
-			grid->recalculate_domains();
-		}
-
-		bool solve_monte_carlo() {
+		bool run_monte_carlo(bool show_output) {
 			int iterations = 0;
 			do {
 				iterations++;
-				re_initialize_grid_value();
+				grid->reset();
 				monte_carlo();
-			} while (!is_end_game());
-			cout << "Finished with " << iterations << " iterations" << endl;
+			} while (!is_finished());
+			if (show_output) {
+				cout << "Finished with " << iterations << " iterations" << endl;
+			}
 			return true;
 		}
 
 		bool monte_carlo() {
 			for (int col = 0; col < grid->get_num_columns(); col++) {
 				for (int row = 0; row < grid->get_num_rows(); row++) {
-					if (!assign_random_value(col, row)) {
+					int domain_size = grid->get_possible_values_size(col, row);
+					if (domain_size != 0) {
+						int *possible_values = grid->get_possible_values(col, row);
+						int rnd = rand() % (domain_size);
+						int random_possible_value = possible_values[rnd];
+						grid->set_cell_value(col, row, random_possible_value);
+						bool consistent = grid->update_domains_free_cell(col, row, random_possible_value, target_col_sum[col], target_row_sum[row]);
+						bool no_domain_empty = grid->check_no_domain_empty();
+						if (!consistent || !no_domain_empty) {
+							return false;
+						}
+					} else {
 						return false;
 					}
 				}
@@ -530,7 +525,7 @@ class Kakuro {
 				algo_str = "forward checking";
 			} else if (algorithm == 2) {
 				algo_str = "monte carlo";
-				algo = solve_monte_carlo();
+				algo = run_monte_carlo(true);
 			}
 
 			cout << endl << "-- Solving using " << algo_str << "'s algorithm --" << endl << endl;
@@ -543,9 +538,53 @@ class Kakuro {
 			cout << "Time elapsed " << to_string(duration) << " s" << endl;
 			show();
 		}
+
+
 };
 
+void run_experiments(string grid, int _iterations, int algo) {
+	int iterations = _iterations;
+	string algo_str = "";
+	clock_t start;
+	start = clock();
+	if (algo == 1) {
+		algo_str = "forward checking";
+	}
+	if (algo == 2) {
+		algo_str = "monte carlo";
+	}
+	cout << "Solving grid [" << grid << "] " << iterations << " times in " << algo_str << " algorithm " << endl;
+
+	while (iterations > 0) {
+		Kakuro kakuro("grids/" + grid + ".txt", ";");
+		if (algo == 1) {
+			kakuro.forward_checking();
+		}
+		if (algo == 2) {
+			kakuro.run_monte_carlo(false);
+		}
+		cout << ".";
+		iterations--;
+	}
+	double duration = (clock() - start) / (double) CLOCKS_PER_SEC;
+	cout << "Time elapsed " << duration << " s" << endl << endl;
+}
+
 int main() {
+	int iterations = 100;
+	/*
+	run_experiments("grid1", iterations, 1);
+	run_experiments("grid2", iterations, 1);
+	run_experiments("grid3", iterations, 1);
+	run_experiments("grid4", iterations, 1);
+	run_experiments("grid5", iterations, 1);
+	*/
+	run_experiments("grid1", iterations, 2);
+	run_experiments("grid2", iterations, 2);
+	run_experiments("grid3", iterations, 2);
+	run_experiments("grid4", iterations, 2);
+	run_experiments("grid5", iterations, 2);
+	
 	while (true) {
 		string path = "";
 		cout << "Enter grid file name : ";
