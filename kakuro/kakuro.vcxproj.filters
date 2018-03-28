@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Kakuro.cpp">
+    <ClCompile Include="Kakuro (2).cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

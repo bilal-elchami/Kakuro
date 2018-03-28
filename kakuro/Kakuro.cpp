@@ -451,11 +451,12 @@ class Kakuro {
 		}
 };
 
-int main() {
+int main2() {
 	Kakuro kakuro("..\\grid-2.txt", ";");
 	cout << "-----------------INITIAL-------------" << endl;
 	kakuro.show();
 	cout << "-----------------SOLVING-------------" << endl;
 	kakuro.solve();
 	kakuro.show();
+	return 0;
 }
