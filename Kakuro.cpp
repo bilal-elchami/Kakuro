@@ -458,9 +458,9 @@ class Kakuro {
 			}
 		}
 
-
 		int sample() {
 			do {
+				//  show();
 				Position unassigned_cell_possition = grid->get_unassigned_cell_position();
 				int col = unassigned_cell_possition.get_col();
 				int row = unassigned_cell_possition.get_row();
@@ -478,24 +478,93 @@ class Kakuro {
 				bool consistent = grid->update_domains_free_cell(col, row, random_value, target_col_sum[col], target_row_sum[row]);
 				bool no_domain_empty = grid->check_no_domain_empty();
 
-				if (!no_domain_empty && !consistent) {
+				if (!no_domain_empty || !consistent) {
 					return 1 + grid->get_unassigned_cell_count();
 				}
+ 
+				if (grid->get_unassigned_cell_count() == 0) {
+					return 0;
+				}
+
 			} while (true);
 
 		}
 
 		bool iterative_sampling() {
-			int tries = 1000;
+			int tries = 10000000;
 			do {
 				if (sample() == 0) {
 					return true;
 				}
 				tries--;
+				grid->reset();
 			} while (tries > 0);
 			return false;
 		}
 
+		int meta_monte_carlo() {
+			int best_score = grid->get_unassigned_cell_count();
+			do {
+				Position unassigned_cell_possition = grid->get_unassigned_cell_position();
+				int col = unassigned_cell_possition.get_col();
+				int row = unassigned_cell_possition.get_row();
+				if ((col == -1) && (row == -1)) {
+					return -1;
+				}
+								
+				int * possible_values = grid->get_possible_values(col, row);
+				int possible_values_count = grid->get_possible_values_size(col, row);
+				int possible_values_copy[MAX];
+				for (int j = 0; j < possible_values_count; j++) {
+					possible_values_copy[j] = possible_values[j];
+				}
+				int best_value;
+
+				for (int i = 0; i < possible_values_count; i++) {
+					int value = possible_values_copy[i];
+					grid->set_cell_value(col, row, value);
+					bool consistent = grid->update_domains_free_cell(col, row, value, target_col_sum[col], target_row_sum[row]);
+					bool no_domain_empty = grid->check_no_domain_empty();
+					int score; 
+					if (!no_domain_empty || !consistent) {
+						score = 1 + grid->get_unassigned_cell_count();
+					} else {
+						score = sample();
+					}
+					if (score < best_score) {
+						best_score = score;
+						best_value = value;
+					}
+				}
+
+				grid->set_cell_value(col, row, best_value);
+				bool consistent = grid->update_domains_free_cell(col, row, best_value, target_col_sum[col], target_row_sum[row]);
+				bool no_domain_empty = grid->check_no_domain_empty();
+				
+				if (!no_domain_empty || !consistent) {
+					return 1 + grid->get_unassigned_cell_count();
+				}
+				// || (best_score == 0)
+				if ((grid->get_unassigned_cell_count() == 0) && is_finished() && consistent) {
+					cout << "ENND" << endl;
+					return 0;
+				}
+
+			} while (true);		
+		}
+
+		bool iterative_meta_monte_carlo() {
+			int tries = 1000000000;
+			do {
+				if (meta_monte_carlo() == 0) {
+					return true;
+				}
+				tries--;
+				grid->reset();
+			} while (tries > 0);
+			return false;
+		}
+		
 		bool forward_checking() {
 			Position unassigned_cell_possition = grid->get_unassigned_cell_position();
 			int col = unassigned_cell_possition.get_col();
@@ -577,20 +646,26 @@ class Kakuro {
 				algo_str = "monte carlo";
 				algo = run_monte_carlo(true);
 			} else if (algorithm == 3) {
+				algo_str = "iterative sampling";
 				algo = iterative_sampling();
+			} else if (algorithm == 4) {
+				algo_str = "iterative meta monte carlo";
+				algo = iterative_meta_monte_carlo();
+			} else if (algorithm == 5) {
+				algo_str = "nested meta monte carlo";
 			}
 
 			cout << endl << "-- Solving using " << algo_str << "'s algorithm --" << endl << endl;
 			if (algo) {
 				cout << "Solution found" << endl;
+				show();
 			} else {
 				cout << "Solution not found" << endl;
 			}
+
 			double duration = (clock() - start) / (double)CLOCKS_PER_SEC;
 			cout << "Time elapsed " << to_string(duration) << " s" << endl;
-			show();
 		}
-
 
 };
 
@@ -623,11 +698,14 @@ void run_experiment(string grid, int _iterations, int algo) {
 }
 
 void experiments() {
-	int iterations = 100;
-	int algo_count = 2;
-	int grid_count = 5;
-	int algo[2] = {1, 2};
-	string grids[5] = {"grid1", "grid2", "grid3", "grid4", "grid5"};
+	int iterations = 5;
+	
+	int algo_count = 1;	
+	int algo[1] = {1};
+
+	string grids[8] = {"grid2x2", "grid3x3", "grid4x4", "grid5x5_1", "grid5x5_2", "grid5x5_3", "grid6x6_1", "grid6x6_2"};
+	int grid_count = 8;
+
 	for (int a = 0; a < algo_count; a++) {
 		for (int i = 0; i < grid_count; i++) {
 			run_experiment(grids[i], iterations, algo[a]);
@@ -647,7 +725,12 @@ int main() {
 		cout << "Enter delimiter : ";
 		cin >> delimiter;
 		int algo;
-		cout << "Choose an algorithm between FORWARD CHECKING(1) / MONTE CARLO(2) / ITERATIVE SAMPLING (3) : ";
+		cout << "Choose an algorithm between " << endl;
+		cout << " FORWARD CHECKING (1)" << endl;
+		cout << " MONTE CARLO (2)" << endl;
+		cout << " ITERATIVE SAMPLING (3)" << endl;
+		cout << " ITERATIVE META MONTE CARLO (4)" << endl;
+		cout << " NESTED MONTE CARLO (4)" << endl;
 		cin >> algo;
 		cout << endl;
 
