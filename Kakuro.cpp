@@ -542,7 +542,7 @@ class Kakuro {
 
 };
 
-void run_experiments(string grid, int _iterations, int algo) {
+void run_experiment(string grid, int _iterations, int algo) {
 	int iterations = _iterations;
 	string algo_str = "";
 	clock_t start;
@@ -570,21 +570,22 @@ void run_experiments(string grid, int _iterations, int algo) {
 	cout << "Time elapsed " << duration << " s" << endl << endl;
 }
 
-int main() {
+void experiments() {
 	int iterations = 100;
-	/*
-	run_experiments("grid1", iterations, 1);
-	run_experiments("grid2", iterations, 1);
-	run_experiments("grid3", iterations, 1);
-	run_experiments("grid4", iterations, 1);
-	run_experiments("grid5", iterations, 1);
-	*/
-	run_experiments("grid1", iterations, 2);
-	run_experiments("grid2", iterations, 2);
-	run_experiments("grid3", iterations, 2);
-	run_experiments("grid4", iterations, 2);
-	run_experiments("grid5", iterations, 2);
-	
+	int algo_count = 2;
+	int grid_count = 5;
+	int algo[2] = {1, 2};
+	string grids[5] = {"grid1", "grid2", "grid3", "grid4", "grid5"};
+	for (int a = 0; a < algo_count; a++) {
+		for (int i = 0; i < grid_count; i++) {
+			run_experiment(grids[i], iterations, algo[a]);
+		}
+	}
+}
+
+int main() {
+	// experiments();
+
 	while (true) {
 		string path = "";
 		cout << "Enter grid file name : ";
