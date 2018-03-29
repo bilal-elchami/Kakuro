@@ -247,6 +247,18 @@ class Grid {
 		return Position(unassigned_col, unassigned_row);
 	}
 
+	get_unassigned_cell_count() {
+		int count = 0;
+		for (int col = 0; col < num_columns; col++) {
+			for (int row = 0; row < num_rows; row++) {
+				if (cells[col][row]->get_value() == INIT_VALUE) {
+					count++;
+				}
+			}
+		}
+		return count;
+	}
+
 	int * get_possible_values(int col, int row) {
 		return cells[col][row]->get_domain();
 	}
@@ -446,6 +458,44 @@ class Kakuro {
 			}
 		}
 
+
+		int sample() {
+			do {
+				Position unassigned_cell_possition = grid->get_unassigned_cell_position();
+				int col = unassigned_cell_possition.get_col();
+				int row = unassigned_cell_possition.get_row();
+				if ((col == -1) && (row == -1)) {
+					return 0;
+				}
+				int * possible_values = grid->get_possible_values(col, row);
+				int possible_values_count = grid->get_possible_values_size(col, row);
+
+				int rnd_i = rand() % (possible_values_count + 1);
+				rnd_i = rnd_i - 1;
+				int random_value = possible_values[rnd_i];
+
+				grid->set_cell_value(col, row, random_value);
+				bool consistent = grid->update_domains_free_cell(col, row, random_value, target_col_sum[col], target_row_sum[row]);
+				bool no_domain_empty = grid->check_no_domain_empty();
+
+				if (!no_domain_empty && !consistent) {
+					return 1 + grid->get_unassigned_cell_count();
+				}
+			} while (true);
+
+		}
+
+		bool iterative_sampling() {
+			int tries = 1000;
+			do {
+				if (sample() == 0) {
+					return true;
+				}
+				tries--;
+			} while (tries > 0);
+			return false;
+		}
+
 		bool forward_checking() {
 			Position unassigned_cell_possition = grid->get_unassigned_cell_position();
 			int col = unassigned_cell_possition.get_col();
@@ -526,6 +576,8 @@ class Kakuro {
 			} else if (algorithm == 2) {
 				algo_str = "monte carlo";
 				algo = run_monte_carlo(true);
+			} else if (algorithm == 3) {
+				algo = iterative_sampling();
 			}
 
 			cout << endl << "-- Solving using " << algo_str << "'s algorithm --" << endl << endl;
@@ -595,7 +647,7 @@ int main() {
 		cout << "Enter delimiter : ";
 		cin >> delimiter;
 		int algo;
-		cout << "Choose an algorithm between FORWARD CHECKING(1) and MONTE CARLO(2) : ";
+		cout << "Choose an algorithm between FORWARD CHECKING(1) / MONTE CARLO(2) / ITERATIVE SAMPLING (3) : ";
 		cin >> algo;
 		cout << endl;
 
