@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string>
+#include <stack>
+
 using namespace std;
 
 #define MAX 100
@@ -212,6 +214,7 @@ class Grid {
 				sum_col += cells[col][r]->get_value();
 			}
 		}
+
 		int max_col_value = target_col_sum - sum_col;
 		bool all_col_assigned = true;
 		for (int r = 0; r < num_rows; r++) {
@@ -220,6 +223,7 @@ class Grid {
 				cells[col][r]->remove_value_domain_greater(max_col_value);
 			}
 		}
+
 		if (all_col_assigned) {
 			if ((max_col_value < 0) || (sum_col != target_col_sum)) {
 				result = false; // inconsistent
@@ -247,7 +251,7 @@ class Grid {
 		return Position(unassigned_col, unassigned_row);
 	}
 
-	get_unassigned_cell_count() {
+	int get_unassigned_cell_count() {
 		int count = 0;
 		for (int col = 0; col < num_columns; col++) {
 			for (int row = 0; row < num_rows; row++) {
@@ -299,6 +303,20 @@ class Grid {
 				cout << possible_values[i] << ", ";
 			}
 			cout << endl;
+		}
+	}
+
+	void show_domain() {
+		for (int col = 0; col < get_num_columns(); col++) {
+			for (int row = 0; row < get_num_rows(); row++) {
+				cout << "Cell [" << col << "," << row << "]: ";
+				int *possible_values = get_possible_values(col, row);
+				for (int i = 0; i < get_possible_values_size(col, row); i++)
+				{
+					cout << possible_values[i] << ", ";
+				}
+				cout << endl;
+			}
 		}
 	}
 
@@ -368,6 +386,61 @@ class Grid {
 		recalculate_domains();
 	}
 
+};
+
+class Assignment {
+	private:
+		int col;
+		int row;
+		int value;
+
+	public: 
+		Assignment(int _col, int _row, int _value) {
+			col = _col;
+			row = _row;
+			value = _value;
+		}
+
+		int get_value() {
+			return value;
+		}
+
+		int get_col() {
+			return col;
+		}
+
+		int get_row() {
+			return row;
+		}
+};
+
+class Sequence {
+	
+	private:
+		stack<Assignment> assignments;
+		int score;
+
+	public:
+		Sequence() {
+		}
+
+		int get_score() {
+			return score;
+		}
+
+		void add_assignment(int col, int row, int value){
+			Assignment assignment(col, row, value);
+			assignments.push(assignment);
+		}
+
+		void set_score(int _score) {
+			score = _score;
+		}
+
+		Assignment pop() {
+			return assignments.top();
+		}
+  
 };
 
 class Kakuro {
@@ -458,14 +531,16 @@ class Kakuro {
 			}
 		}
 
-		int sample() {
+		Sequence sample() {
+			Sequence sequence;
 			do {
 				//  show();
 				Position unassigned_cell_possition = grid->get_unassigned_cell_position();
 				int col = unassigned_cell_possition.get_col();
 				int row = unassigned_cell_possition.get_row();
 				if ((col == -1) && (row == -1)) {
-					return 0;
+					sequence.set_score(-1);
+					return sequence;
 				}
 				int * possible_values = grid->get_possible_values(col, row);
 				int possible_values_count = grid->get_possible_values_size(col, row);
@@ -473,17 +548,23 @@ class Kakuro {
 				int rnd_i = rand() % (possible_values_count + 1);
 				rnd_i = rnd_i - 1;
 				int random_value = possible_values[rnd_i];
-
+				
 				grid->set_cell_value(col, row, random_value);
+				sequence.add_assignment(col, row, random_value);
 				bool consistent = grid->update_domains_free_cell(col, row, random_value, target_col_sum[col], target_row_sum[row]);
 				bool no_domain_empty = grid->check_no_domain_empty();
 
 				if (!no_domain_empty || !consistent) {
-					return 1 + grid->get_unassigned_cell_count();
+					int score = 1 + grid->get_unassigned_cell_count();
+					sequence.set_score(score);
+					return sequence;
 				}
  
 				if (grid->get_unassigned_cell_count() == 0) {
-					return 0;
+					cout << "END" << endl;
+					
+					sequence.set_score(0);
+					return sequence;
 				}
 
 			} while (true);
@@ -493,7 +574,8 @@ class Kakuro {
 		bool iterative_sampling() {
 			int tries = 10000000;
 			do {
-				if (sample() == 0) {
+				Sequence s = sample();
+				if (s.get_score() == 0) {
 					return true;
 				}
 				tries--;
@@ -518,37 +600,47 @@ class Kakuro {
 				for (int j = 0; j < possible_values_count; j++) {
 					possible_values_copy[j] = possible_values[j];
 				}
-				int best_value;
 
+				Sequence best_sequence;
 				for (int i = 0; i < possible_values_count; i++) {
 					int value = possible_values_copy[i];
 					grid->set_cell_value(col, row, value);
 					bool consistent = grid->update_domains_free_cell(col, row, value, target_col_sum[col], target_row_sum[row]);
 					bool no_domain_empty = grid->check_no_domain_empty();
-					int score; 
+					int score;
+					Sequence sequence; 
 					if (!no_domain_empty || !consistent) {
 						score = 1 + grid->get_unassigned_cell_count();
 					} else {
-						score = sample();
+						sequence = sample(); // ?
+						score = sequence.get_score();
 					}
 					if (score < best_score) {
 						best_score = score;
-						best_value = value;
+						best_sequence = sequence;
 					}
 				}
+
+				Assignment a = best_sequence.pop();
+				int best_value = a.get_value();
+				col = a.get_col();
+				row = a.get_row();
 
 				grid->set_cell_value(col, row, best_value);
 				bool consistent = grid->update_domains_free_cell(col, row, best_value, target_col_sum[col], target_row_sum[row]);
 				bool no_domain_empty = grid->check_no_domain_empty();
-				
+
+				show();
+				grid->show_domain();
+
 				if (!no_domain_empty || !consistent) {
 					return 1 + grid->get_unassigned_cell_count();
 				}
-				// || (best_score == 0)
-				if ((grid->get_unassigned_cell_count() == 0) && is_finished() && consistent) {
-					cout << "ENND" << endl;
+				
+				if ((grid->get_unassigned_cell_count() == 0) || (best_score == 0) && consistent){
 					return 0;
 				}
+
 
 			} while (true);		
 		}
@@ -556,9 +648,11 @@ class Kakuro {
 		bool iterative_meta_monte_carlo() {
 			int tries = 1000000000;
 			do {
-				if (meta_monte_carlo() == 0) {
-					return true;
+				int count = meta_monte_carlo();
+				if (count == 0) {
+						return true;
 				}
+				
 				tries--;
 				grid->reset();
 			} while (tries > 0);
