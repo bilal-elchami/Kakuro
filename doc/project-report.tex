@@ -41,20 +41,23 @@
 \end{figure}
 
 \section{Implementation}
-In our project we created 4 classes: $Position$, $Cell$, $Grid$ and $Kakuro$. The $Cell$ class is represented by a value and a $Position$. The $Grid$ contain a list of $Cell$. Finally the $Kakuro$ contains the $Grid$ with all the possible value that a $Cel$l can have and the target sum of rows and columns. $Kakuro$ class contains the implemented algorithm: Forward Checking and Monte Carlo. \\
+In our project we created 4 classes: $Position$, $Cell$, $Grid$ and $Kakuro$. The $Cell$ class is represented by a value and a $Position$. The $Grid$ contain a list of $Cell$. Finally the $Kakuro$ contains the $Grid$ with all the possible value that a $Cel$l can have and the target sum of rows and columns. $Kakuro$ class contains the implemented algorithm: Forward Checking and Iterative Sampling and Iterative Meta Monte Carlo. \\
 
 \subsection{Grid}
 The initial grid of the kakuro will be present in a file, which will contain the possible values of a cell and the target sum of each column and row. We have tested our project in 5 different grids with different sizes between 4x4 and 6x6 grid. You can find the different girds under the folder \textit{grids} in the GitHub repository.
 
 \subsection{Choosing variable}
-While solving the Kakuro grid, we have decided to choose the variable (Cell) that has the smallest domain size. In both algorithm, forward checking and monte carlo, we have implemented the same logic regarding the choice of variable.
+While solving the Kakuro grid, we have decided to choose the variable (Cell) tha--t has the smallest domain size. In both algorithm, forward checking and monte carlo, we have implemented the same logic regarding the choice of variable.
 
 \section{Search Algorithms}
 We implemented two algorithms: Forward Checking and Monte Carlo.
 \subsection{Forward Checking}
 This algorithm consist in reducing the domain of each variable not assigned. Each time a value is assigned to a cell, the value is removed from the domain of the cell in the same row and column. To check if we need to backtrack, two conditions are evaluated, the first one is making sure that all the unassigned Cell don't have an empty domain and the other condition is making sure that the grid is consistent which will evalute the row or column where all the cell are assigned and make sure that they match the target sum.
 
-\subsection{Monte Carlo}
+\subsection{Iterative Sampling}
+This algorithm consist in assiging a random value for a Cell, and in case of inconsistency in the grid or in case of an empty domain for an unassigned cell we will reinitialize the grid and restart the algorithm. 
+
+\subsection{Iterative Meta Monte Carlo}
 This algorithm consist in assiging a random value for a Cell, and in case of inconsistency in the grid or in case of an empty domain for an unassigned cell we will reinitialize the grid and restart the algorithm. 
 
 \section{Experimentals - Simulation}
@@ -64,19 +67,19 @@ In order to test the perfomance of our algorithm, we runned several grids 100 ti
         \begin{center}
         \caption{Simulation}
         \label{tab:simParameters}
-        \begin{tabular}{|c|c|c|}
+        \begin{tabular}{|c|c|c|c|}
             \hline
-           Grids & Forward Checking &  Monte Carlo \\
+           Grids & Forward Checking &  Iterative Sampling & Meta Monte Carlo \\
             \hline
-           Grid 1& $0.02$ s  &  $ 0.019 $ s  \\
+           2x2 & $0.02$ s  &  $ 0.019 $ s   &  $ 0.019 $ s  \\
             \hline
-           Grid 2 & $0.021$ s  &  $ 0.02 $ s  \\
+           3x3 & $0.021$ s  &  $ 0.02 $ s &  $ 0.019 $ s    \\
             \hline
-           Grid 3 & $ 2.804  $ s  &  $ 0 $ s  \\
+           4x4 & $ 2.804  $ s  &  $ 0 $ s  &  $ 0.019 $ s   \\
             \hline
-           Grid 4 & $5.02$ s  &  $ 0 $ s  \\
+           5x5 & $5.02$ s  &  $ 0 $ s &  $ 0.019 $ s    \\
             \hline
-           Grid 5 & $ 10,152.1$ s  &  $ 0 $ s  \\
+           6x6 & $ 10,152.1$ s  &  $ 0 $ s  &  $ 0.019 $ s   \\
             \hline
         \end{tabular}
         \end{center}
